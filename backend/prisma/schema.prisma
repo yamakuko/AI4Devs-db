@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
@@ -15,25 +9,26 @@ datasource db {
 }
 
 model Candidate {
-  id                Int               @id @default(autoincrement())
-  firstName         String            @db.VarChar(100)
-  lastName          String            @db.VarChar(100)
-  email             String            @unique @db.VarChar(255)
-  phone             String?           @db.VarChar(15)
-  address           String?           @db.VarChar(100)
-  educations        Education[]
-  workExperiences   WorkExperience[]
-  resumes           Resume[]
+  id              Int              @id @default(autoincrement())
+  firstName       String           @db.VarChar(100)
+  lastName        String           @db.VarChar(100)
+  email           String           @unique @db.VarChar(255)
+  phone           String?          @db.VarChar(15)
+  address         String?          @db.VarChar(100)
+  applications    Application[]
+  educations      Education[]
+  resumes         Resume[]
+  workExperiences WorkExperience[]
 }
 
 model Education {
-  id            Int       @id @default(autoincrement())
-  institution   String    @db.VarChar(100)
-  title         String    @db.VarChar(250)
-  startDate     DateTime
-  endDate       DateTime?
-  candidateId   Int
-  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  id          Int       @id @default(autoincrement())
+  institution String    @db.VarChar(100)
+  title       String    @db.VarChar(250)
+  startDate   DateTime
+  endDate     DateTime?
+  candidateId Int
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
 }
 
 model WorkExperience {
@@ -54,4 +49,97 @@ model Resume {
   uploadDate  DateTime
   candidateId Int
   candidate   Candidate @relation(fields: [candidateId], references: [id])
+}
+
+model Company {
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(100)
+  employees Employee[]
+  positions Position[]
+}
+
+model Employee {
+  id         Int         @id @default(autoincrement())
+  companyId  Int
+  name       String      @db.VarChar(100)
+  email      String      @unique @db.VarChar(255)
+  role       String      @db.VarChar(50)
+  isActive   Boolean     @default(true)
+  company    Company     @relation(fields: [companyId], references: [id])
+  interviews Interview[]
+}
+
+model Position {
+  id                  Int           @id @default(autoincrement())
+  companyId           Int
+  interviewFlowId     Int
+  title               String        @db.VarChar(100)
+  description         String?
+  status              String        @db.VarChar(20)
+  isVisible           Boolean       @default(true)
+  location            String        @db.VarChar(100)
+  jobDescription      String?
+  requirements        String?
+  responsibilities    String?
+  salaryMin           Decimal?      @db.Decimal(10, 2)
+  salaryMax           Decimal?      @db.Decimal(10, 2)
+  employmentType      String        @db.VarChar(50)
+  benefits            String?
+  companyDescription  String?
+  applicationDeadline DateTime?
+  contactInfo         String?       @db.VarChar(255)
+  applications        Application[]
+  company             Company       @relation(fields: [companyId], references: [id])
+  interviewFlow       InterviewFlow @relation(fields: [interviewFlowId], references: [id])
+}
+
+model InterviewFlow {
+  id             Int             @id @default(autoincrement())
+  description    String          @db.VarChar(255)
+  interviewSteps InterviewStep[]
+  positions      Position[]
+}
+
+model InterviewStep {
+  id              Int           @id @default(autoincrement())
+  interviewFlowId Int
+  interviewTypeId Int
+  name            String        @db.VarChar(100)
+  orderIndex      Int
+  interviews      Interview[]
+  interviewFlow   InterviewFlow @relation(fields: [interviewFlowId], references: [id])
+  interviewType   InterviewType @relation(fields: [interviewTypeId], references: [id])
+}
+
+model InterviewType {
+  id             Int             @id @default(autoincrement())
+  name           String          @db.VarChar(100)
+  description    String?
+  interviewSteps InterviewStep[]
+}
+
+model Application {
+  id              Int         @id @default(autoincrement())
+  positionId      Int
+  candidateId     Int
+  applicationDate DateTime    @default(now())
+  status          String      @db.VarChar(20)
+  notes           String?
+  candidate       Candidate   @relation(fields: [candidateId], references: [id])
+  position        Position    @relation(fields: [positionId], references: [id])
+  interviews      Interview[]
+}
+
+model Interview {
+  id              Int           @id @default(autoincrement())
+  applicationId   Int
+  interviewStepId Int
+  employeeId      Int
+  interviewDate   DateTime
+  result          String?       @db.VarChar(20)
+  score           Int?
+  notes           String?
+  application     Application   @relation(fields: [applicationId], references: [id])
+  employee        Employee      @relation(fields: [employeeId], references: [id])
+  interviewStep   InterviewStep @relation(fields: [interviewStepId], references: [id])
 }
